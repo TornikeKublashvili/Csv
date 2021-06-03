@@ -11,9 +11,6 @@ import org.springframework.stereotype.Component;
 public class ApplicationSettings {
 
 	private static final Logger logger = LoggerFactory.getLogger(ApplicationSettings.class);
-
-	@Value ("${csv.file.name}")
-	public String csvFileName;
 	
 	@Value ("${csv.separator}")
 	public String csvSeparator;
@@ -38,7 +35,6 @@ public class ApplicationSettings {
 	@PostConstruct
 	public void initialisation() {
 		logger.info("---------- Start Initialisation ----------");
-		logger.info("csv.file.name= " + csvFileName);
 		logger.info("csv.separator= " + csvSeparator);
 		logger.info("csv.search.directory= " + csvSearchDirectory);
 		logger.info("csv.input.folder.name= " + csvInputFolderName);
