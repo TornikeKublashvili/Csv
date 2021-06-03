@@ -5,11 +5,9 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.app.Application;
-import com.app.ApplicationSettings;
 import com.app.csv.DiagnosticMetricsCsv;
 import com.app.csv.DiagnosticMetricsRow;
 
@@ -17,11 +15,10 @@ import com.app.csv.DiagnosticMetricsRow;
 public class DiagnosticMetricsCalculator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(Application.class);
-	@Autowired
-	private ApplicationSettings  appSettings;
+
 	
-	public DiagnosticMetricsCsv addTwoCsv(DiagnosticMetricsCsv first, DiagnosticMetricsCsv second) {	
-		DiagnosticMetricsCsv out = new DiagnosticMetricsCsv(appSettings.caseProbabilitiesLength);
+	public DiagnosticMetricsCsv addTwoCsv(DiagnosticMetricsCsv first, DiagnosticMetricsCsv second, int caseLength) {	
+		DiagnosticMetricsCsv out = new DiagnosticMetricsCsv(caseLength);
 		for(int id : first.rows.keySet()) {
 			DiagnosticMetricsRow rowFromFirstCsv = first.rows.get(id);
 			DiagnosticMetricsRow rowFromSecondCsv = second.rows.get(id);
@@ -94,6 +91,36 @@ public class DiagnosticMetricsCalculator {
 	public List<DiagnosticMetricsRow> calculateSumAndAvgFromAllRows(DiagnosticMetricsCsv diagnosticMetricsCsv) {	
 		List<DiagnosticMetricsRow> out = new ArrayList<DiagnosticMetricsRow>();
 		DiagnosticMetricsRow sum = null;
+		int rowCount=0;
+		for(int id : diagnosticMetricsCsv.rows.keySet()) {
+			DiagnosticMetricsRow row = diagnosticMetricsCsv.rows.get(id);
+			if(sum == null) {
+				sum = row;
+				rowCount++;
+			}
+			else {
+				sum = addTwoRows(sum.rowId, sum, row);
+				rowCount++;
+			}
+		}
+		sum.caseId = Integer.MIN_VALUE;
+		sum.rowId = Integer.MIN_VALUE;
+		out.add(sum);
+		
+		double caseProbabilitiesAvg []= new double[sum.caseProbabilities.length];
+		double caseProbabilitiesSum[] = sum.caseProbabilities;
+		for (int i = 0; i < caseProbabilitiesAvg.length; i ++) {
+			caseProbabilitiesAvg[i] = caseProbabilitiesSum[i]/rowCount;
+		}
+		out.add(new DiagnosticMetricsRow(Integer.MIN_VALUE+1,Integer.MIN_VALUE+1, sum.earlinessAvg/rowCount, sum.trueAvg100/rowCount, 
+				sum.trueAvg1000/rowCount, sum.adaptionRateAvg/rowCount, sum.adaptionPerEp/rowCount, sum.costAvg/rowCount,
+				sum.costPerEp/rowCount, sum.rewardsAvg/rowCount, sum.rewardPerEp/rowCount, sum.truePerEp/rowCount,
+				sum.positionAdaptationPerEp/rowCount,  sum.caseLengthPerEp/rowCount, caseProbabilitiesAvg, sum.costAvg100/rowCount, sum.revardsAvgAll/rowCount));	
+		return out;	
+	}
+	public List<DiagnosticMetricsRow> calculateSumAndAvgFromAllRowsBeforeAndAfterConvergence(DiagnosticMetricsCsv diagnosticMetricsCsv) {	
+		List<DiagnosticMetricsRow> out = new ArrayList<DiagnosticMetricsRow>();
+		DiagnosticMetricsRow sum = null;
 		DiagnosticMetricsRow sumAfterConvergence = null;
 		int rowCount=0;
 		int rowCountAfterConvergence=0;
@@ -112,7 +139,8 @@ public class DiagnosticMetricsCalculator {
 			if(!convergent) {
 				convergent = row.converget();
 			}
-			else {
+			
+			if(convergent){
 				if(sumAfterConvergence == null) {
 					sumAfterConvergence = row;
 					rowCountAfterConvergence++;
@@ -154,8 +182,8 @@ public class DiagnosticMetricsCalculator {
 		return out;	
 	}
 	
-	public DiagnosticMetricsCsv divideCsv(DiagnosticMetricsCsv csv, int x) {	
-		DiagnosticMetricsCsv out = new DiagnosticMetricsCsv(appSettings.caseProbabilitiesLength);
+	public DiagnosticMetricsCsv divideCsv(DiagnosticMetricsCsv csv, int x, int caseLength) {	
+		DiagnosticMetricsCsv out = new DiagnosticMetricsCsv(caseLength);
 		for(int id : csv.rows.keySet()) {
 			DiagnosticMetricsRow row = csv.rows.get(id);
 			out.insertRow(id, divideRow(id, row, x));

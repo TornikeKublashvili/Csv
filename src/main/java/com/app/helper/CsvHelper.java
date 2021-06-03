@@ -14,6 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.app.csv.DiagnosticMetricsCsv;
+import com.app.csv.DiagnosticMetricsRow;
+
 @Component
 public class CsvHelper {
 	
@@ -55,5 +58,16 @@ public class CsvHelper {
 		} catch (FileNotFoundException e) {
 			logger.error(e.toString());
 		} 
+	}
+	
+	public DiagnosticMetricsCsv getDiagnosticMetricsCsv(String path, int caseLength, int startRowIndex) {
+		List <String> lines = getLinesFromCsvData(readCsvDataFromPath(path));
+		DiagnosticMetricsCsv diagnosticMetricsCsv = new DiagnosticMetricsCsv(caseLength);
+		for(int i = 0; i < lines.size(); i ++) {
+			if(i > startRowIndex) {
+				diagnosticMetricsCsv.insertRow(i, new DiagnosticMetricsRow(i, lines.get(i), caseLength)); 
+			}
+		}
+		return diagnosticMetricsCsv;
 	}
 }

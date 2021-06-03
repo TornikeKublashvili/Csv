@@ -33,8 +33,6 @@ public class ApplicationSettings {
 	@Value ("${csv.output.file.name}")
 	public String csvOutputFileName;
 	
-	@Value ("${case.length}")
-	public int caseProbabilitiesLength;
 	
 
 	@PostConstruct

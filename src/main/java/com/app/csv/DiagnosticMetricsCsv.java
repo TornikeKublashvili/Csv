@@ -38,6 +38,20 @@ public class DiagnosticMetricsCsv {
 		}
 	}
 	
+	public int getConvergenceStart() {
+		for(int id : rows.keySet()) {
+			DiagnosticMetricsRow row = rows.get(id);
+			if (row.converget()) {
+				return id-1;
+			}
+		}
+		return 0;
+	}
+	
+	public DiagnosticMetricsRow getRowWithAvgValues() {
+		return rows.get(2);
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
