@@ -28,7 +28,8 @@ public class Application implements CommandLineRunner {
 	public String withK = "02 WithK";
 	public String avgCsv = "03 AvgCsv";
 	public String aftConv =  "04 AftConv";
-	public String avgRow = "05 AvgRow";
+	public String beforeConv =  "05 BeforeConv";
+	public String avgRow = "06 AvgRow";
 	public int caseLengthBPIC2012 = 47;
 	public int caseLengthBPIC2017 = 71;
 	public int caseLengthTraffic = 4;
@@ -72,6 +73,7 @@ public class Application implements CommandLineRunner {
 		 we delete all rows before the Reinforcement Learning agent has started convergence and save the generated csv in the nev folder
 		**/
 		//removeRowsBevoreConvergence();
+		//removeRowsAfterConvergence();
 		
 		/**
 		Step 4
@@ -180,6 +182,25 @@ public class Application implements CommandLineRunner {
 		}
 	}
 	
+	public void removeRowsAfterConvergence() {
+		String searchDir = appSettings.csvSearchDirectory + "\\" + avgCsv;
+		for (String dataSet : dataSets) {
+			String searchDirDataSet = searchDir + "\\" + dataSet;
+			int caseLength = getCaseLength(dataSet);
+			int convergenceLine = getMaxConvergenceLineFordataSet(dataSet);
+			for (String ensembleLearningMethode : ensembleLearningMethodes) {
+				String searchDirEnsLearningMeht = searchDirDataSet + "\\" + ensembleLearningMethode + "\\";
+				for(int j = 1; j < 6; j ++) {
+					List <File> allFolders = fileHelper.getAllSubdirectories(searchDirEnsLearningMeht  + (j/10.0), appSettings.csvInputFolderName);
+					for (File folder : allFolders) {
+						String csvPath = fileHelper.getCsvFilePathFromDirectory(folder.getAbsolutePath(), appSettings.csvInputFileName);
+						DiagnosticMetricsCsv diagnosticMetricsCsv = csvHelper.getDiagnosticMetricsCsvbeforeIndex(csvPath, caseLength, convergenceLine);
+						csvHelper.saveCsv(searchDirEnsLearningMeht.replace(avgCsv, beforeConv) + (j/10.0) + "\\MasterStateMasterReward_Avg\\" + appSettings.csvOutputFileName, diagnosticMetricsCsv.toString());
+					}
+				}
+			}
+		}
+	}
 
 	public void calculateSumAndAvgFromAllRowsAndSaveAsTheNewRows() {
 		String searchDir = appSettings.csvSearchDirectory + "\\" + aftConv;

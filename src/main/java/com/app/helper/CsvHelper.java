@@ -70,4 +70,14 @@ public class CsvHelper {
 		}
 		return diagnosticMetricsCsv;
 	}
+	public DiagnosticMetricsCsv getDiagnosticMetricsCsvbeforeIndex(String path, int caseLength, int startRowIndex) {
+		List <String> lines = getLinesFromCsvData(readCsvDataFromPath(path));
+		DiagnosticMetricsCsv diagnosticMetricsCsv = new DiagnosticMetricsCsv(caseLength);
+		for(int i = 1; i < lines.size(); i ++) {
+			if(i < startRowIndex) {
+				diagnosticMetricsCsv.insertRow(i, new DiagnosticMetricsRow(i, lines.get(i), caseLength)); 
+			}
+		}
+		return diagnosticMetricsCsv;
+	}
 }
