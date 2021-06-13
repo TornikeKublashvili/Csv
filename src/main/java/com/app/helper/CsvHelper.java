@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 import com.app.csv.DiagnosticMetricsCsv;
 import com.app.csv.DiagnosticMetricsRow;
+import com.app.csv.ModelsCsv;
+import com.app.csv.ModelsRow;
 
 @Component
 public class CsvHelper {
@@ -79,5 +81,15 @@ public class CsvHelper {
 			}
 		}
 		return diagnosticMetricsCsv;
+	}
+	
+	public ModelsCsv getModelsCsv(String path) {
+		List <String> lines = getLinesFromCsvData(readCsvDataFromPath(path));
+		ModelsCsv modelsCsv = new ModelsCsv();
+		for(int i = 1; i < lines.size(); i ++) {
+			modelsCsv.insertRow(i, new ModelsRow(lines.get(i))); 
+			
+		}
+		return modelsCsv;
 	}
 }

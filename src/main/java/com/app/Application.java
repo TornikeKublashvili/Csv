@@ -2,7 +2,9 @@ package com.app;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.app.calculator.DiagnosticMetricsCalculator;
 import com.app.csv.DiagnosticMetricsCsv;
 import com.app.csv.DiagnosticMetricsRow;
+import com.app.csv.ModelsCsv;
+import com.app.csv.ModelsRow;
 import com.app.helper.CsvHelper;
 import com.app.helper.FileHelper;
 
@@ -30,6 +34,7 @@ public class Application implements CommandLineRunner {
 	public String aftConv =  "04 AftConv";
 	public String beforeConv =  "05 BeforeConv";
 	public String avgRow = "06 AvgRow";
+	public String modelsPath = "C:\\BA\\Inpit Models\\Traffic_RNN.csv";
 	public int caseLengthBPIC2012 = 47;
 	public int caseLengthBPIC2017 = 71;
 	public int caseLengthTraffic = 4;
@@ -82,11 +87,41 @@ public class Application implements CommandLineRunner {
 		 */
 		//calculateSumAndAvgFromAllRowsAndSaveAsTheNewRows();
 		
-		printConvergenceLine();
-		printCosts();
-		printLearningProcess();
+		//printConvergenceLine();
+		//printCosts();
+		//printLearningProcess();
+		
+		test(modelsPath);
+		
+
+		
 	}
 
+	public void test(String csvPath) {
+
+		ModelsCsv modelsCsv = csvHelper.getModelsCsv(csvPath);
+		Map<Integer, ModelsRow> rows = modelsCsv.rows;
+		Map<Double, ModelsCsv> sortdWithPosition = new HashMap<Double, ModelsCsv>();
+		for(int i : rows.keySet()) {
+			ModelsRow row = rows.get(i);
+			if(sortdWithPosition.containsKey(row.position)) {
+				sortdWithPosition.get(row.position).insertRow(row.rowId, row);
+			}
+			else {
+				ModelsCsv modelsCsvSortedWithProcessLength = new ModelsCsv();
+				modelsCsvSortedWithProcessLength.insertRow(row.rowId, row);
+				sortdWithPosition.put(row.position, modelsCsvSortedWithProcessLength);
+			}
+		}
+		for(Double d : sortdWithPosition.keySet()) {
+			
+			logger.info(d+ " getCorrelation " + sortdWithPosition.get(d).getCorrelation());
+			logger.info(d+ " getMCC " + sortdWithPosition.get(d).getMCC());
+		}
+		
+		logger.info(modelsCsv.getCorrelation()+"");
+		logger.info(modelsCsv.getMCC()+"");
+	}
 	
 	public void calculateCosts() {
 		String searchDir = appSettings.csvSearchDirectory + "\\" + raw;
@@ -293,12 +328,16 @@ public class Application implements CommandLineRunner {
 	}
 	
 	public String roundedDouble(double d, int decimal) {
-		String format = "###.";
+		String format = "##.";
 		for (int i = 0; i < decimal; i ++) {
 			format += "#";
 		}
         DecimalFormat df = new DecimalFormat(format);
         String value = df.format(d);
+        if(!value.contains(",")) {
+        	value += ",0";
+        }
+        
         while(value.substring(value.indexOf(","), value.length()).length() <= decimal) {
         	value+="0"; 
         }
@@ -329,7 +368,7 @@ public class Application implements CommandLineRunner {
 		}
 		return out/arr.length;
 	}
-	
+
 	public int getMaxConvergenceLineFordataSet(String dataSet) {
 		String searchDir = appSettings.csvSearchDirectory + "\\" + avgCsv;
 		String searchDirDataSet = searchDir + "\\" + dataSet;

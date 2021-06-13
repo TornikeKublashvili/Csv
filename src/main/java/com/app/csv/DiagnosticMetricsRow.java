@@ -69,6 +69,9 @@ public class DiagnosticMetricsRow {
 	}
 	
 	public boolean converget() {
+		if(rowId < 100) {
+			return false; 
+		}
 		return rewardsAvg > revardsAvgAll ? true : false;
 	}
 	@Override
