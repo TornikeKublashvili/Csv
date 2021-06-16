@@ -30,7 +30,8 @@ public class ApplicationSettings {
 	@Value ("${csv.output.file.name}")
 	public String csvOutputFileName;
 	
-	
+	@Value ("${csv.search.directory.models}")
+	public String csvSearchDirectoryModels;
 
 	@PostConstruct
 	public void initialisation() {
@@ -41,6 +42,8 @@ public class ApplicationSettings {
 		logger.info("csv.input.file.name= " + csvInputFileName);
 		logger.info("csv.output.directory= " + csvOutputDirectory);
 		logger.info("csv.output.file.name= " + csvOutputFileName);
+		logger.info("csv.search.directory.models= " + csvSearchDirectoryModels);
+
 		logger.info("---------- End Initialisation ----------");
 	}
 }

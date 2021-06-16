@@ -5,6 +5,8 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,7 @@ import com.app.helper.FileHelper;
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
-	private static final Logger logger = LoggerFactory.getLogger(Application.class);
-		
+	private static final Logger logger = LoggerFactory.getLogger(Application.class);		
 	public String [] ensembleLearningMethodes = new String [] {"RNN", "RF"};
 	public String [] dataSets = new String [] {"BPIC2012", "BPIC2017", "traffic"};
 	public String raw = "01 Raw";
@@ -34,21 +35,20 @@ public class Application implements CommandLineRunner {
 	public String aftConv =  "04 AftConv";
 	public String beforeConv =  "05 BeforeConv";
 	public String avgRow = "06 AvgRow";
-	public String modelsPath = "C:\\BA\\Inpit Models\\Traffic_RNN.csv";
 	public int caseLengthBPIC2012 = 47;
 	public int caseLengthBPIC2017 = 71;
 	public int caseLengthTraffic = 4;
 	@Autowired
 	private ApplicationSettings  appSettings;
-	
 	@Autowired
 	private CsvHelper csvHelper;
-	
 	@Autowired
 	private FileHelper fileHelper;
-	
 	@Autowired
 	private DiagnosticMetricsCalculator diagnosticMetricsCalculator;
+
+	public String path = "C:\\BA\\Input Models\\BPIC2012_RF.csv";
+
 	
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -91,38 +91,20 @@ public class Application implements CommandLineRunner {
 		//printCosts();
 		//printLearningProcess();
 		
-		test(modelsPath);
 		
+		printCorrelationAll();
+
+	//	printReliabilityAll();
+		
+	//	printConfusionMatrixAll();
 
 		
-	}
-
-	public void test(String csvPath) {
-
-		ModelsCsv modelsCsv = csvHelper.getModelsCsv(csvPath);
-		Map<Integer, ModelsRow> rows = modelsCsv.rows;
-		Map<Double, ModelsCsv> sortdWithPosition = new HashMap<Double, ModelsCsv>();
-		for(int i : rows.keySet()) {
-			ModelsRow row = rows.get(i);
-			if(sortdWithPosition.containsKey(row.position)) {
-				sortdWithPosition.get(row.position).insertRow(row.rowId, row);
-			}
-			else {
-				ModelsCsv modelsCsvSortedWithProcessLength = new ModelsCsv();
-				modelsCsvSortedWithProcessLength.insertRow(row.rowId, row);
-				sortdWithPosition.put(row.position, modelsCsvSortedWithProcessLength);
-			}
-		}
-		for(Double d : sortdWithPosition.keySet()) {
-			
-			logger.info(d+ " getCorrelation " + sortdWithPosition.get(d).getCorrelation());
-			logger.info(d+ " getMCC " + sortdWithPosition.get(d).getMCC());
-		}
 		
-		logger.info(modelsCsv.getCorrelation()+"");
-		logger.info(modelsCsv.getMCC()+"");
 	}
 	
+
+
+
 	public void calculateCosts() {
 		String searchDir = appSettings.csvSearchDirectory + "\\" + raw;
 		for (String dataSet : dataSets) {
@@ -402,4 +384,113 @@ public class Application implements CommandLineRunner {
 		DiagnosticMetricsCsv diagnosticMetricsCsv = csvHelper.getDiagnosticMetricsCsv(csvPath, caseLength, 0);		
 		return diagnosticMetricsCsv.getConvergenceStart();		
 	}
+	
+	public void printCorrelationAll() {
+		String searchDir = appSettings.csvSearchDirectoryModels;
+		for (String dataSet : dataSets) {
+			String searchDirDataSet = searchDir + "\\" + dataSet;
+			for (String ensembleLearningMethode : ensembleLearningMethodes) {
+				String searchDirEnsLearningMeht = searchDirDataSet + "_" + ensembleLearningMethode + ".csv";
+				System.out.println("Correlation for " + dataSet + " " + ensembleLearningMethode );
+				printCorrelation(searchDirEnsLearningMeht);
+			}
+		}
+	}
+	
+	public void printCorrelation(String csvPath) {
+
+		ModelsCsv modelsCsv = csvHelper.getModelsCsv(csvPath);
+		Map<Integer, ModelsRow> rows = modelsCsv.rows;
+		Map<Double, ModelsCsv> sortdWithPosition = new HashMap<Double, ModelsCsv>();
+		for(int i : rows.keySet()) {
+			ModelsRow row = rows.get(i);
+			if(sortdWithPosition.containsKey(row.position)) {
+				sortdWithPosition.get(row.position).insertRow(row.rowId, row);
+			}
+			else {
+				ModelsCsv modelsCsvSortedWithProcessLength = new ModelsCsv();
+				modelsCsvSortedWithProcessLength.insertRow(row.rowId, row);
+				sortdWithPosition.put(row.position, modelsCsvSortedWithProcessLength);
+			}
+		}
+		SortedSet<Double> keys = new TreeSet<>(sortdWithPosition.keySet());
+		for(Double d : keys) {
+			System.out.println(d + ","+sortdWithPosition.get(d).getCorrelation());
+			System.out.println(d + ","+sortdWithPosition.get(d).getMCC());
+		}	
+		System.out.println("Avg," + modelsCsv.getCorrelation());
+		System.out.println("Avg," + modelsCsv.getMCC());
+
+	}
+	
+	public void printReliability(String csvPath) {
+		ModelsCsv modelsCsv = csvHelper.getModelsCsv(csvPath);
+		Map<Integer, ModelsRow> rows = modelsCsv.rows;
+		Map<Double, ModelsCsv> sortdWithPosition = new HashMap<Double, ModelsCsv>();
+		for(int i : rows.keySet()) {
+			ModelsRow row = rows.get(i);
+			if(sortdWithPosition.containsKey(row.position)) {
+				sortdWithPosition.get(row.position).insertRow(row.rowId, row);
+			}
+			else {
+				ModelsCsv modelsCsvSortedWithProcessLength = new ModelsCsv();
+				modelsCsvSortedWithProcessLength.insertRow(row.rowId, row);
+				sortdWithPosition.put(row.position, modelsCsvSortedWithProcessLength);
+			}
+		}
+		SortedSet<Double> keys = new TreeSet<>(sortdWithPosition.keySet());
+		for(Double d : keys) {
+			System.out.println(d + ","+sortdWithPosition.get(d).getAvgReliability());
+		}	
+		System.out.println("Avg," + modelsCsv.getAvgReliability());
+	}
+	
+	public void printReliabilityAll() {
+		String searchDir = appSettings.csvSearchDirectoryModels;
+		for (String dataSet : dataSets) {
+			String searchDirDataSet = searchDir + "\\" + dataSet;
+			for (String ensembleLearningMethode : ensembleLearningMethodes) {
+				String searchDirEnsLearningMeht = searchDirDataSet + "_" + ensembleLearningMethode + ".csv";
+				System.out.println("Relaiability for " + dataSet + " " + ensembleLearningMethode );
+				printReliability(searchDirEnsLearningMeht);
+			}
+		}
+	}
+	
+	public void printConfusionMatrixAll() {
+		String searchDir = appSettings.csvSearchDirectoryModels;
+		for (String dataSet : dataSets) {
+			String searchDirDataSet = searchDir + "\\" + dataSet;
+			for (String ensembleLearningMethode : ensembleLearningMethodes) {
+				String searchDirEnsLearningMeht = searchDirDataSet + "_" + ensembleLearningMethode + ".csv";
+				System.out.println("Confusion Matrix for " + dataSet + " " + ensembleLearningMethode );
+				printConfusionMatrix(searchDirEnsLearningMeht);
+			}
+		}
+	}
+	
+	public void printConfusionMatrix(String csvPath) {
+		ModelsCsv modelsCsv = csvHelper.getModelsCsv(csvPath);
+		Map<Integer, ModelsRow> rows = modelsCsv.rows;
+		Map<Double, ModelsCsv> sortdWithPosition = new HashMap<Double, ModelsCsv>();
+		for(int i : rows.keySet()) {
+			ModelsRow row = rows.get(i);
+			if(sortdWithPosition.containsKey(row.position)) {
+				sortdWithPosition.get(row.position).insertRow(row.rowId, row);
+			}
+			else {
+				ModelsCsv modelsCsvSortedWithProcessLength = new ModelsCsv();
+				modelsCsvSortedWithProcessLength.insertRow(row.rowId, row);
+				sortdWithPosition.put(row.position, modelsCsvSortedWithProcessLength);
+			}
+		}
+		System.out.println("step, count all, count TP, percent TP, count TN, percent TN, count FP, percent FP, count FN, percent FN");
+		SortedSet<Double> keys = new TreeSet<>(sortdWithPosition.keySet());
+		for(Double d : keys) {
+			System.out.println(d + ","+sortdWithPosition.get(d).getConfusionMatrixPercent());
+		}	
+		System.out.println("Avg," + modelsCsv.getConfusionMatrixPercent());
+
+	}
+	
 }
